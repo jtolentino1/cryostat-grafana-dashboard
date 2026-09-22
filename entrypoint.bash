@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-exec /usr/sbin/grafana-server                               \
+exec /usr/share/grafana/bin/grafana server                 \
   --homepath="$GF_PATHS_HOME"                               \
   --config="$GF_PATHS_CONFIG"                               \
   --packaging=docker                                        \

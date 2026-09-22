@@ -18,6 +18,17 @@
     "safe-to-test"
   ],
   "semanticCommits": "enabled",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^Dockerfile$/"],
+      "matchStrings": ["ARG GRAFANA_VERSION=(?<currentValue>\\S+)"],
+      "depNameTemplate": "grafana/grafana",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
   "major": {
     "dependencyDashboardApproval": true
   },

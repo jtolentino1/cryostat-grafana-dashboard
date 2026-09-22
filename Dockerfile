@@ -1,9 +1,10 @@
 FROM quay.io/centos/centos:stream9-minimal@sha256:3d8e44f855b4649f6fb52952734b9396d2e12a51d471e70aab7aea9d518fe915
 ARG UID=101
 ARG PORT=3000
+ARG GRAFANA_VERSION=12.4.11
 
 WORKDIR /usr/share/grafana
-ENV VERSION=10
+ENV VERSION=${GRAFANA_VERSION}
 ENV GF_PATHS_HOME=/usr/share/grafana
 ENV HOME=/usr/share/grafana
 ENV GF_PATHS_PROVISIONING=/etc/grafana/provisioning
@@ -20,15 +21,17 @@ LABEL name="cryostat/cryostat-grafana-dashboard" \
       io.openshift.expose-services="3000:grafana" \
       io.openshift.tags="grafana,monitoring,dashboard"
 
-# Pin the tested plugin version for CentOS Stream 9's Grafana.
-# Infinity >= 3.7.2 requires Grafana >= 11.6; 4.0.0 fails to load react/jsx-runtime.
+# Use Grafana's upstream RPM for the React modules required by Infinity.
+COPY grafana.repo /etc/yum.repos.d/grafana.repo
+
 RUN useradd -u ${UID} -g 0 -r -d $GF_PATHS_HOME -s /sbin/nologin grafana && \
+    rpm --import https://rpm.grafana.com/gpg.key && \
     microdnf upgrade -y && \
-    microdnf install -y --setopt=tsflags=nodocs grafana && \
+    microdnf install -y --setopt=tsflags=nodocs grafana-${GRAFANA_VERSION} && \
     microdnf clean all && \
+    /usr/sbin/grafana cli plugins install yesoreyeram-infinity-datasource && \
     chgrp -R 0 /etc/grafana /var/lib/grafana /var/log/grafana && \
-    chmod -R g=u /var/lib/grafana /var/log/grafana && \
-    /usr/sbin/grafana cli plugins install yesoreyeram-infinity-datasource 3.7.1
+    chmod -R g=u /var/lib/grafana /var/log/grafana
 
 COPY --chown=grafana:grafana \
     dashboards.yaml \
